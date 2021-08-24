@@ -2,7 +2,7 @@
 server:
   servlet:
     context-path: /consumer
-  port: 7003
+  port: 7004
 spring:
   application:
     name: consumer-server
