@@ -117,6 +117,11 @@ local function brother(query_character, modify_character, query_faction, modify_
     modify_character:apply_relationship_trigger_set(query_faction_leader, "3k_main_relationship_trigger_set_startpos_battle_own_victory_heroic")
     modify_character:apply_relationship_trigger_set(query_faction_leader, "3k_main_relationship_trigger_set_event_positive_generic_extreme")
     modify_character:apply_relationship_trigger_set(query_faction_leader, "3k_dlc05_relationship_trigger_set_startpos_romance")
+    --添加满意度
+    modify_character:add_loyalty_effect( "data_random_events_positive_large" )--满意度：吉事 20，15回合
+    modify_character:add_loyalty_effect( "past_experience_fondness" )--满意度：派系喜爱 15，无限回合
+    --loyalty_effect：married_daughter 与主公联姻 = 满意度：派系喜爱 25，50回合
+
     ModLog("FactionEffectBundleAwarded--执行, 【结拜】，添加义亲的关系");
     --若主公有父亲，则将结拜的对象设置为father的孩子，以便可以展示在家谱上
     if (query_faction_leader:family_member():has_father()) then
