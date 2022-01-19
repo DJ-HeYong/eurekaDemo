@@ -16,7 +16,8 @@ local listen_name = "listen_character_ex_op_byHy"
 local effect_bundle_key_list = {
     { "effect_bundle_斩首character", "effect_bundle_斩首faction" },
     { "effect_bundle_纳妾character", "effect_bundle_纳妾faction" },
-    { "effect_bundle_结拜character", "effect_bundle_结拜faction" }
+    { "effect_bundle_结拜character", "effect_bundle_结拜faction" },
+    { "effect_bundle_巩固忠诚character", "effect_bundle_巩固忠诚faction" }
 }
 
 local function is_contain_effect_bundle_key_faction(effect_bundle_key)
@@ -118,8 +119,8 @@ local function brother(query_character, modify_character, query_faction, modify_
     modify_character:apply_relationship_trigger_set(query_faction_leader, "3k_main_relationship_trigger_set_event_positive_generic_extreme")
     modify_character:apply_relationship_trigger_set(query_faction_leader, "3k_dlc05_relationship_trigger_set_startpos_romance")
     --添加满意度
-    modify_character:add_loyalty_effect( "data_random_events_positive_large" )--满意度：吉事 20，15回合
-    modify_character:add_loyalty_effect( "past_experience_fondness" )--满意度：派系喜爱 15，无限回合
+    modify_character:add_loyalty_effect("data_random_events_positive_large")--满意度：吉事 20，15回合
+    modify_character:add_loyalty_effect("past_experience_fondness")--满意度：派系喜爱 15，无限回合
     --loyalty_effect：married_daughter 与主公联姻 = 满意度：派系喜爱 25，50回合
 
     ModLog("FactionEffectBundleAwarded--执行, 【结拜】，添加义亲的关系");
@@ -135,6 +136,15 @@ local function brother(query_character, modify_character, query_faction, modify_
     ModLog("FactionEffectBundleAwarded--执行, 【结拜】，国库减少100");
 end
 
+
+--巩固忠诚
+local function solidify_loyalty(modify_character, modify_faction)
+    modify_character:add_loyalty_effect("past_experience_fondness")--满意度：派系喜爱 15，无限回合
+    modify_character:add_loyalty_effect("presented_gift")--满意度：礼尚往来 40，10回合
+    --扣除国库
+    modify_faction:decrease_treasury(300)
+    ModLog("FactionEffectBundleAwarded--执行, 【巩固忠诚】，国库减少300");
+end
 
 --==============================================================================--
 -- 监听函数 --
@@ -177,6 +187,8 @@ local function characterExOp_byHy()
                             marry(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
                             brother(query_character, modify_character, query_faction, modify_faction)
+                        elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
+                            solidify_loyalty(modify_character, modify_faction)
                         end
                         --由于上面character每次都会移除effect_bundle，所以此处只需要检测到一个符合条件的character即可，然后break跳出循环
                         break ;
