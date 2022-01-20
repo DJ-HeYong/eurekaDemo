@@ -129,9 +129,9 @@ local function characterExOp_byHy()
                         if (effect_bundle_key_character == "effect_bundle_斩首character") then
                             kill(modify_character, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_纳妻character") then
-                            CharacterExOp_marry:marry_wife(query_character, modify_character, query_faction, modify_faction)
+                            CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
-                            CharacterExOp_marry:marry_concubine(query_character, modify_character, query_faction, modify_faction)
+                            CharacterExOp_marry_byHy:marry_concubine(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
                             brother(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
