@@ -15,6 +15,7 @@ local listen_name = "listen_character_ex_op_byHy"
 
 local effect_bundle_key_list = {
     { "effect_bundle_斩首character", "effect_bundle_斩首faction" },
+    { "effect_bundle_纳妻character", "effect_bundle_纳妻faction" },
     { "effect_bundle_纳妾character", "effect_bundle_纳妾faction" },
     { "effect_bundle_结拜character", "effect_bundle_结拜faction" },
     { "effect_bundle_巩固忠诚character", "effect_bundle_巩固忠诚faction" }
@@ -48,62 +49,6 @@ local function kill(modify_character, modify_faction)
     modify_character:kill_character(true)
     modify_faction:increase_treasury(1000)
     ModLog("FactionEffectBundleAwarded--执行, 【斩首】，国库增加1000");
-end
-
---纳妾（主公可男可女）
-local function marry(query_character, modify_character, query_faction, modify_faction)
-    local query_faction_leader = query_faction:faction_leader();
-    if ((query_character:is_male() and query_faction_leader:is_male()) or
-            (not query_character:is_male() and not query_faction_leader:is_male())
-    ) then
-        --不可搞基，不可百合
-        ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，同性焉能结婚，则返回不做操作");
-        return
-    end
-    --如果此人已经是主公的伴侣，则返回不做操作
-    if (query_character:family_member():has_spouse() and
-            query_character:family_member():spouse():character() == query_faction_leader) then
-        ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，此人已经是主公的伴侣，则返回不做操作");
-        return
-    end
-
-    --先注释掉离婚，离婚操作放在cdir_events_incident_payloads_tables或cdir_events_dilemma_payloads_tables中执行
-    --[[
-    --如果此人已经结婚,且ta的伴侣不是主公，先离婚
-    if (query_character:family_member():has_spouse() and
-            query_character:family_member():spouse():character() ~= query_faction_leader
-    ) then
-        ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，此人的伴侣不是主公，先离婚");
-        modify_character:family_member():divorce_spouse()
-    end
-    ]]--
-
-    --结婚：通过incident事件类型，来触发两个角色的结婚
-    -- ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，通过incident事件类型，来触发两个角色的结婚");
-    -- local incident_marry = cm:modify_model():create_incident("incident_纳妾")
-    -- incident_marry:add_character_target("target_character_1", query_faction_leader);
-    -- incident_marry:add_character_target("target_character_2", query_character);
-    -- incident_marry:add_faction_target("target_faction_1", query_faction);
-    -- incident_marry:trigger(modify_faction, true);
-
-    ---注意（必读）： 不知道为何使用incident事件无法成功，所以换成了dilemma事件，但是pack中incident相关的table我也没删掉，先留着吧，反正不影响---
-    ---注意（必读）： dilemma之所以可以使用Payload Key: MARRIAGE来实现多个伴侣，我认为是CA的bug！正因为有这个bug，才实现了纳妾！
-    ---      ---------------- cdir_events_dilemma_payloads_tables -----------------
-    ---      4444002    dilemmas_纳妾    SECOND    MARRIAGE    MARRIAGE_TARGET[target_character_1]    target_character_2
-    ---      这条dilemma的数据代表，target_character_1 将和 target_character_2 结婚，两者的伴侣互相设置为彼此，但是不会首先判断他们之前是否拥有伴侣，不会先执行离婚。
-    ---      举例，当吕布本来有“严夫人”时，吕布执行纳妾 “貂蝉”，就会形成 吕布 和 貂蝉 是一对，严夫人的丈夫是吕布，吕布的妻子却是 “貂蝉”了。这也是正和家谱里面的显示对应！！！
-
-    --结婚：通过dilemma事件类型，来触发两个角色的结婚
-    ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，通过dilemma事件类型，来触发两个角色的结婚");
-    local dilemma_marry = cm:modify_model():create_dilemma("dilemmas_纳妾");
-    dilemma_marry:add_character_target("target_character_1", query_character);
-    dilemma_marry:add_character_target("target_character_2", query_faction_leader);
-    dilemma_marry:add_faction_target("target_faction_1", query_faction);
-    dilemma_marry:trigger(modify_faction, true);
-
-    --扣除国库（结婚肯定要花钱啊）
-    modify_faction:decrease_treasury(100)
-    ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，国库减少100");
 end
 
 
@@ -183,8 +128,10 @@ local function characterExOp_byHy()
                         --根据类型，调用不同的方法
                         if (effect_bundle_key_character == "effect_bundle_斩首character") then
                             kill(modify_character, modify_faction)
+                        elseif (effect_bundle_key_character == "effect_bundle_纳妻character") then
+                            CharacterExOp_marry:marry_wife(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
-                            marry(query_character, modify_character, query_faction, modify_faction)
+                            CharacterExOp_marry:marry_concubine(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
                             brother(query_character, modify_character, query_faction, modify_faction)
                         elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
