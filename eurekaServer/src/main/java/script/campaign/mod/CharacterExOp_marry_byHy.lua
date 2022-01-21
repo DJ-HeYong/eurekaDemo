@@ -6,19 +6,11 @@
 ---      4444002    dilemmas_纳妻    SECOND    MARRIAGE    MARRIAGE_TARGET[target_character_1]    target_character_2
 ---      这条dilemma的数据代表，target_character_1 将和 target_character_2 结婚，两者的伴侣互相设置为彼此，但是不会首先判断他们之前是否拥有伴侣，不会先执行离婚。
 ---      举例，当吕布本来有“严夫人”时，吕布执行纳妻 “貂蝉”，就会形成 吕布 和 貂蝉 是一对，严夫人的丈夫是吕布，吕布的妻子却是 “貂蝉”了。这也是正和家谱里面的显示对应！！！
---先注释掉新人离婚，操作放在cdir_events_incident_payloads_tables或cdir_events_dilemma_payloads_tables中执行
---[[
---如果此人已经结婚,且ta的伴侣不是主公，先离婚
-if (query_character:family_member():has_spouse() and
-        query_character:family_member():spouse():character() ~= query_faction_leader
-) then
-    ModLog("FactionEffectBundleAwarded--执行, 【纳妻】，此人的伴侣不是主公，先离婚");
-    modify_character:family_member():divorce_spouse()
-end
-]]--
 --==============================================================================--
 
-CharacterExOp_marry_byHy = {}
+CharacterExOp_marry_byHy = {
+    modify_character_spouse = nil, --新人原来的伴侣
+}
 
 function CharacterExOp_marry_byHy:is_can_marry(query_character, query_faction_leader)
     if ((query_character:is_male() and query_faction_leader:is_male()) or
@@ -45,12 +37,13 @@ function CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, 
         return ;
     end
     --无论主公现在是否有伴侣，执行纳妻，新人直接成为正室
-    --DIVORCE_TARGET[target_character_1];MARRIAGE_TARGET[target_character_1]
-    --新妾离婚--->新妾和主公结婚，保证新妾变为正室
     local dilemma_marry = cm:modify_model():create_dilemma("dilemmas_纳妻");
     dilemma_marry:add_character_target("target_character_1", query_character);--新人
     dilemma_marry:add_character_target("target_character_2", query_faction_leader);--主公
     dilemma_marry:add_faction_target("target_faction_1", query_faction);
+    if (query_character:family_member():has_spouse()) then
+        CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+    end
     dilemma_marry:trigger(modify_faction, true);
 
     --扣除国库
@@ -66,26 +59,46 @@ function CharacterExOp_marry_byHy:marry_concubine(query_character, modify_charac
     end
     if (not query_faction_leader:family_member():has_spouse()) then
         --主公没有伴侣，执行纳妻
-        --DIVORCE_TARGET[target_character_1];MARRIAGE_TARGET[target_character_1]
-        --新妾离婚--->新妾和主公结婚，保证新妾变为正室
         local dilemma_marry = cm:modify_model():create_dilemma("dilemmas_纳妻");
         dilemma_marry:add_character_target("target_character_1", query_character);--新人
         dilemma_marry:add_character_target("target_character_2", query_faction_leader);--主公
         dilemma_marry:add_faction_target("target_faction_1", query_faction);
+        if (query_character:family_member():has_spouse()) then
+            CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+        end
         dilemma_marry:trigger(modify_faction, true);
     else
         --主公有伴侣，执行纳妾
-        --DIVORCE_TARGET[target_character_1];MARRIAGE_TARGET[target_character_1];MARRIAGE_TARGET[target_character_3]
-        --新妾离婚--->新妾和主公结婚--->原配再次和主公结婚，保证原配仍然是正室
         local dilemma_marry = cm:modify_model():create_dilemma("dilemmas_纳妾");
         dilemma_marry:add_character_target("target_character_1", query_character);--新人
         dilemma_marry:add_character_target("target_character_2", query_faction_leader);--主公
-        dilemma_marry:add_character_target("target_character_3", query_faction_leader:family_member():spouse():character());--原配
+        dilemma_marry:add_character_target("target_character_3", query_faction_leader:family_member():spouse():character());--主公的原配
         dilemma_marry:add_faction_target("target_faction_1", query_faction);
+        if (query_character:family_member():has_spouse()) then
+            CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+        end
         dilemma_marry:trigger(modify_faction, true);
     end
     --扣除国库
     modify_faction:decrease_treasury(100)
     ModLog("FactionEffectBundleAwarded--执行, 【纳妾】，国库减少100");
 end
+
+core:add_listener(
+        "listen_character_ex_op_marry_byHy", -- Unique handle
+        "DilemmaChoiceMadeEvent", -- Campaign Event to listen for
+        function(context)
+            local dilemma = context:dilemma()
+            return (dilemma == "dilemmas_纳妾" or dilemma == "dilemmas_纳妻") and context:choice() == 0
+        end,
+        function(context)
+            if (CharacterExOp_marry_byHy.modify_character_spouse ~= nil) then
+                --此处只需要 新人旧伴侣的离婚即可，新人不可离婚，否则刚刚新人和主公的婚姻会消失
+                CharacterExOp_marry_byHy.modify_character_spouse:family_member():divorce_spouse()
+                ModLog("FactionEffectBundleAwarded--执行, 【纳妻/妾】，新人之前存在伴侣，执行新人的旧伴侣离婚");
+                CharacterExOp_marry_byHy.modify_character_spouse = nil
+            end
+        end,
+        true
+);
 
