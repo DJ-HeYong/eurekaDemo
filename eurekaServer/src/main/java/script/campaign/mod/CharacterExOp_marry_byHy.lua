@@ -97,6 +97,7 @@ core:add_listener(
             if (#CharacterExOp_marry_byHy.modify_character_spouse > 0) then
                 for i = 1, #CharacterExOp_marry_byHy.modify_character_spouse do
                     --此处只需要 新人旧伴侣的离婚即可，新人不可离婚，否则刚刚新人和主公的婚姻会消失
+                    --divorce_spouse()函数，只会单方面解除婚姻，只有当双方都执行divorce_spouse()时，双方彼此之间才会解除婚姻关系
                     CharacterExOp_marry_byHy.modify_character_spouse[i]:family_member():divorce_spouse()
                     ModLog("FactionEffectBundleAwarded--执行, 【纳妻/妾】，新人之前存在伴侣，执行新人的旧伴侣离婚" .. CharacterExOp_marry_byHy.modify_character_spouse[i]:query_character():generation_template_key());
                 end

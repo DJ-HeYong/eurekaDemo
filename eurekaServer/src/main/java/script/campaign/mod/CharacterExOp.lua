@@ -17,7 +17,7 @@ local effect_bundle_key_list = {
     { "effect_bundle_斩首character", "effect_bundle_斩首faction" },
     { "effect_bundle_纳妻character", "effect_bundle_纳妻faction" },
     { "effect_bundle_纳妾character", "effect_bundle_纳妾faction" },
-    { "effect_bundle_结拜character", "effect_bundle_结拜faction" },
+    { "effect_bundle_桃园结义character", "effect_bundle_桃园结义faction" },
     { "effect_bundle_巩固忠诚character", "effect_bundle_巩固忠诚faction" }
 }
 
@@ -52,10 +52,10 @@ local function kill(modify_character, modify_faction)
 end
 
 
---结拜
+--桃园结义
 local function brother(query_character, modify_character, query_faction, modify_faction)
     if (query_character:family_member():is_in_faction_leaders_family()) then
-        ModLog("FactionEffectBundleAwarded--执行, 【结拜】，此人已经在主公的family之中，则返回不做操作");
+        ModLog("FactionEffectBundleAwarded--执行, 【桃园结义】，此人已经在主公的family之中，则返回不做操作");
         return
     end
     --添加义亲的关系
@@ -68,17 +68,17 @@ local function brother(query_character, modify_character, query_faction, modify_
     modify_character:add_loyalty_effect("past_experience_fondness")--满意度：派系喜爱 15，无限回合
     --loyalty_effect：married_daughter 与主公联姻 = 满意度：派系喜爱 25，50回合
 
-    ModLog("FactionEffectBundleAwarded--执行, 【结拜】，添加义亲的关系");
-    --若主公有父亲，则将结拜的对象设置为father的孩子，以便可以展示在家谱上
+    ModLog("FactionEffectBundleAwarded--执行, 【桃园结义】，添加义亲的关系");
+    --若主公有父亲，则将桃园结义的对象设置为father的孩子，以便可以展示在家谱上
     if (query_faction_leader:family_member():has_father()) then
         local query_faction_leader_father = query_faction_leader:family_member():father():character();
         local modify_faction_leader_father = cm:modify_character(query_faction_leader_father:cqi())
         modify_character:make_child_of(modify_faction_leader_father);
-        ModLog("FactionEffectBundleAwarded--执行, 【结拜】，主公有父亲，将结拜的对象设置为father的孩子，以便可以展示在家谱上");
+        ModLog("FactionEffectBundleAwarded--执行, 【桃园结义】，主公有父亲，将桃园结义的对象设置为father的孩子，以便可以展示在家谱上");
     end
     --扣除国库
     modify_faction:decrease_treasury(100)
-    ModLog("FactionEffectBundleAwarded--执行, 【结拜】，国库减少100");
+    ModLog("FactionEffectBundleAwarded--执行, 【桃园结义】，国库减少100");
 end
 
 
@@ -97,8 +97,10 @@ local function character_ex_op_do(context)
     ModLog("------------分割线------------------- ");
     --1、为什么使用FactionEffectBundleAwarded？？？ 因为没找到其他更好的办法！
     --2、effect_bundle_key 只是用来给势力，和武将添加buff的，为了配合"FactionEffectBundleAwarded"事件监听，从而知道鼠标点击的按钮对应哪个武将。
-    --3、campaign_payload_effect_bundles_tables中，同一个payload对应的effectBundle必须character排在faction之上（按照顺序依次赋予effectBundle，
-    --因为我们触发"FactionEffectBundleAwarded"时候，必须保证effectBundle已经赋予给了character，否则无法获取点击了哪个武将）
+    --3、campaign_payload_effect_bundles_tables中，同一个payload对应的effectBundle的顺序：必须保证ui上看见的效果顺序是先赋予character，再赋予faction
+    --   问：如何保证ui上看见的效果顺序是character效果在上，faction效果在下？？？
+    --   答：我也不知道，我最开始以为在tables中，同一个payload对应的effectBundle顺序从上到下依次为character、faction的顺序就行了，但其实不是的。
+    --   因为我们触发"FactionEffectBundleAwarded"时候，必须保证effectBundle已经赋予给了character，否则无法获取点击了哪个武将
     --4、为了不影响下一次按钮的点击，我们每次都【必须】清除faction和character的effect_bundle
 
     local effect_bundle_key_faction = context:effect_bundle_key()
@@ -113,7 +115,7 @@ local function character_ex_op_do(context)
         local query_character = character_list:item_at(i)
         local character_template_key = query_character:generation_template_key();
         ModLog("FactionEffectBundleAwarded--执行,遍历 query_character: " .. character_template_key);
-        
+
         if ( query_character:has_effect_bundle(effect_bundle_key_character)) then
             local cqi = query_character:cqi();
             local modify_character = cm:modify_character(cqi)
@@ -130,7 +132,7 @@ local function character_ex_op_do(context)
                     CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
                     CharacterExOp_marry_byHy:marry_concubine(query_character, modify_character, query_faction, modify_faction)
-                elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
+                elseif (effect_bundle_key_character == "effect_bundle_桃园结义character") then
                     brother(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
                     solidify_loyalty(modify_character, modify_faction)
