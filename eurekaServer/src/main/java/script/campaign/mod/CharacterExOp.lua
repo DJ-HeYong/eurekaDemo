@@ -103,6 +103,7 @@ local function character_ex_op_do(context)
 
     local effect_bundle_key_faction = context:effect_bundle_key()
     local effect_bundle_key_character = get_effect_bundle_key_character(effect_bundle_key_faction)
+    ModLog("FactionEffectBundleAwarded--执行start, effect_bundle_key_character: " .. effect_bundle_key_character);
     local query_faction = context:faction()
     local modify_faction = cm:modify_faction(query_faction)
     --先移除势力的effect_bundle，每次【必须】移除
@@ -110,27 +111,30 @@ local function character_ex_op_do(context)
     local character_list = query_faction:character_list()
     for i = 0, character_list:num_items() - 1 do
         local query_character = character_list:item_at(i)
-        if ((not query_character:is_dead()) and query_character:has_effect_bundle(effect_bundle_key_character)) then
+        if ( query_character:has_effect_bundle(effect_bundle_key_character)) then
             local character_template_key = query_character:generation_template_key();
-            local cqi = query_character:cqi();
-            local modify_character = cm:modify_character(cqi)
-            --先移除武将身上的effect_bundle，每次【必须】移除
-            modify_character:remove_effect_bundle(effect_bundle_key_character);
             ModLog("FactionEffectBundleAwarded--执行start, 目标人物: " .. character_template_key);
-            --根据类型，调用不同的方法
-            if (effect_bundle_key_character == "effect_bundle_斩首character") then
-                kill(modify_character, modify_faction)
-            elseif (effect_bundle_key_character == "effect_bundle_纳妻character") then
-                CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, query_faction, modify_faction)
-            elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
-                CharacterExOp_marry_byHy:marry_concubine(query_character, modify_character, query_faction, modify_faction)
-            elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
-                brother(query_character, modify_character, query_faction, modify_faction)
-            elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
-                solidify_loyalty(modify_character, modify_faction)
+            if((not query_character:is_dead())) then
+                local cqi = query_character:cqi();
+                local modify_character = cm:modify_character(cqi)
+                --先移除武将身上的effect_bundle，每次【必须】移除
+                modify_character:remove_effect_bundle(effect_bundle_key_character);
+                ModLog("FactionEffectBundleAwarded--执行start, 目标人物存活: " .. character_template_key);
+                --根据类型，调用不同的方法
+                if (effect_bundle_key_character == "effect_bundle_斩首character") then
+                    kill(modify_character, modify_faction)
+                elseif (effect_bundle_key_character == "effect_bundle_纳妻character") then
+                    CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, query_faction, modify_faction)
+                elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
+                    CharacterExOp_marry_byHy:marry_concubine(query_character, modify_character, query_faction, modify_faction)
+                elseif (effect_bundle_key_character == "effect_bundle_结拜character") then
+                    brother(query_character, modify_character, query_faction, modify_faction)
+                elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
+                    solidify_loyalty(modify_character, modify_faction)
+                end
+                --由于上面character每次都会移除effect_bundle，所以此处只需要检测到一个符合条件的character即可，然后break跳出循环
+                break ;
             end
-            --由于上面character每次都会移除effect_bundle，所以此处只需要检测到一个符合条件的character即可，然后break跳出循环
-            break ;
         end
     end
     ModLog("FactionEffectBundleAwarded--执行over, 目标人物: " .. character_template_key);
