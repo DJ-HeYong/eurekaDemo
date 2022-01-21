@@ -17,7 +17,7 @@ local effect_bundle_key_list = {
     { "effect_bundle_斩首character", "effect_bundle_斩首faction" },
     { "effect_bundle_纳妻character", "effect_bundle_纳妻faction" },
     { "effect_bundle_纳妾character", "effect_bundle_纳妾faction" },
-    { "effect_bundle_桃园结义character", "effect_bundle_桃园结义faction" },
+    { "effect_bundle_taoyuan_hy_character", "effect_bundle_taoyuan_hy_faction" },
     { "effect_bundle_巩固忠诚character", "effect_bundle_巩固忠诚faction" }
 }
 
@@ -114,7 +114,7 @@ local function character_ex_op_do(context)
     for i = 0, character_list:num_items() - 1 do
         local query_character = character_list:item_at(i)
         local character_template_key = query_character:generation_template_key();
-        ModLog("FactionEffectBundleAwarded--执行,遍历 query_character: " .. character_template_key);
+        --ModLog("FactionEffectBundleAwarded--执行,遍历 query_character: " .. character_template_key);
 
         if ( query_character:has_effect_bundle(effect_bundle_key_character)) then
             local cqi = query_character:cqi();
@@ -132,7 +132,7 @@ local function character_ex_op_do(context)
                     CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_纳妾character") then
                     CharacterExOp_marry_byHy:marry_concubine(query_character, modify_character, query_faction, modify_faction)
-                elseif (effect_bundle_key_character == "effect_bundle_桃园结义character") then
+                elseif (effect_bundle_key_character == "effect_bundle_taoyuan_hy_character") then
                     brother(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
                     solidify_loyalty(modify_character, modify_faction)
