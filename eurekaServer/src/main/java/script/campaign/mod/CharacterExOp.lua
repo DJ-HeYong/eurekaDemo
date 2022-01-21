@@ -95,12 +95,12 @@ local function character_ex_op_do(context)
     ModLog("------------分割线------------------- ");
     ModLog("------------分割线------------------- ");
     ModLog("------------分割线------------------- ");
-    --1、为什么使用FactionEffectBundleAwarded？？？ 因为没找到其他更好的办法！
+    --1、为什么使用FactionEffectBundleAwarded？？？ 因为没找到其他更好的办法，没有CharacterEffectBundleAwarded这样的事件。（这算是曲线救国吧）
     --2、effect_bundle_key 只是用来给势力，和武将添加buff的，为了配合"FactionEffectBundleAwarded"事件监听，从而知道鼠标点击的按钮对应哪个武将。
-    --3、campaign_payload_effect_bundles_tables中，同一个payload对应的effectBundle的顺序：必须保证ui上看见的效果顺序是先赋予character，再赋予faction
-    --   问：如何保证ui上看见的效果顺序是character效果在上，faction效果在下？？？
-    --   答：我也不知道，我最开始以为在tables中，同一个payload对应的effectBundle顺序从上到下依次为character、faction的顺序就行了，但其实不是的。
+    --3、campaign_payload_effect_bundles_tables中，同一个payload对应的effectBundle的顺序：必须保证ui界面上看见的效果顺序是先赋予character，再赋予faction
     --   因为我们触发"FactionEffectBundleAwarded"时候，必须保证effectBundle已经赋予给了character，否则无法获取点击了哪个武将
+    --   问：如何保证ui上看见的效果顺序是character效果在上，faction效果在下？？？
+    --   答：我也不知道，我最开始以为在tables中，同一个payload对应的effectBundle顺序从上到下依次为character、faction的顺序就行了，但其实不是绝对的（大多数情况是）。
     --4、为了不影响下一次按钮的点击，我们每次都【必须】清除faction和character的effect_bundle
 
     local effect_bundle_key_faction = context:effect_bundle_key()
