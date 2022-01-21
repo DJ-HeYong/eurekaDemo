@@ -9,7 +9,7 @@
 --==============================================================================--
 
 CharacterExOp_marry_byHy = {
-    modify_character_spouse = nil, --新人原来的伴侣
+    modify_character_spouse = {}, --新人原来的伴侣
 }
 
 function CharacterExOp_marry_byHy:is_can_marry(query_character, query_faction_leader)
@@ -42,7 +42,7 @@ function CharacterExOp_marry_byHy:marry_wife(query_character, modify_character, 
     dilemma_marry:add_character_target("target_character_2", query_faction_leader);--主公
     dilemma_marry:add_faction_target("target_faction_1", query_faction);
     if (query_character:family_member():has_spouse()) then
-        CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+        table.insert(CharacterExOp_marry_byHy.modify_character_spouse, cm:modify_character(query_character:family_member():spouse():character():cqi()))
     end
     dilemma_marry:trigger(modify_faction, true);
 
@@ -64,7 +64,7 @@ function CharacterExOp_marry_byHy:marry_concubine(query_character, modify_charac
         dilemma_marry:add_character_target("target_character_2", query_faction_leader);--主公
         dilemma_marry:add_faction_target("target_faction_1", query_faction);
         if (query_character:family_member():has_spouse()) then
-            CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+            table.insert(CharacterExOp_marry_byHy.modify_character_spouse, cm:modify_character(query_character:family_member():spouse():character():cqi()))
         end
         dilemma_marry:trigger(modify_faction, true);
     else
@@ -75,7 +75,7 @@ function CharacterExOp_marry_byHy:marry_concubine(query_character, modify_charac
         dilemma_marry:add_character_target("target_character_3", query_faction_leader:family_member():spouse():character());--主公的原配
         dilemma_marry:add_faction_target("target_faction_1", query_faction);
         if (query_character:family_member():has_spouse()) then
-            CharacterExOp_marry_byHy.modify_character_spouse = cm:modify_character(query_character:family_member():spouse():character():cqi())
+            table.insert(CharacterExOp_marry_byHy.modify_character_spouse, cm:modify_character(query_character:family_member():spouse():character():cqi()))
         end
         dilemma_marry:trigger(modify_faction, true);
     end
@@ -89,14 +89,17 @@ core:add_listener(
         "DilemmaChoiceMadeEvent", -- Campaign Event to listen for
         function(context)
             local dilemma = context:dilemma()
-            return (dilemma == "dilemmas_纳妾" or dilemma == "dilemmas_纳妻") and context:choice() == 0
+            ModLog("DilemmaChoiceMadeEvent, context:choice() = " .. context:choice())
+            return (dilemma == "dilemmas_纳妾" or dilemma == "dilemmas_纳妻") and context:choice() == 1
         end,
         function(context)
-            if (CharacterExOp_marry_byHy.modify_character_spouse ~= nil) then
-                --此处只需要 新人旧伴侣的离婚即可，新人不可离婚，否则刚刚新人和主公的婚姻会消失
-                CharacterExOp_marry_byHy.modify_character_spouse:family_member():divorce_spouse()
-                ModLog("FactionEffectBundleAwarded--执行, 【纳妻/妾】，新人之前存在伴侣，执行新人的旧伴侣离婚");
-                CharacterExOp_marry_byHy.modify_character_spouse = nil
+            if (#CharacterExOp_marry_byHy.modify_character_spouse > 0) then
+                for i = 1, #CharacterExOp_marry_byHy.modify_character_spouse do
+                    --此处只需要 新人旧伴侣的离婚即可，新人不可离婚，否则刚刚新人和主公的婚姻会消失
+                    CharacterExOp_marry_byHy.modify_character_spouse[i]:family_member():divorce_spouse()
+                    ModLog("FactionEffectBundleAwarded--执行, 【纳妻/妾】，新人之前存在伴侣，执行新人的旧伴侣离婚" .. CharacterExOp_marry_byHy.modify_character_spouse[i]:query_character():generation_template_key());
+                end
+                CharacterExOp_marry_byHy.modify_character_spouse = {}
             end
         end,
         true
