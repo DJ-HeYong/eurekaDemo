@@ -89,7 +89,8 @@ core:add_listener(
         "DilemmaChoiceMadeEvent", -- Campaign Event to listen for
         function(context)
             local dilemma = context:dilemma()
-            ModLog("DilemmaChoiceMadeEvent, context:choice() = " .. context:choice())
+            --选择FIRST   context:choice() = 0
+            --选择SECOND   context:choice() = 1
             return (dilemma == "dilemmas_纳妾" or dilemma == "dilemmas_纳妻") and context:choice() == 1
         end,
         function(context)

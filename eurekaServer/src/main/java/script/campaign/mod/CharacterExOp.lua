@@ -111,14 +111,17 @@ local function character_ex_op_do(context)
     local character_list = query_faction:character_list()
     for i = 0, character_list:num_items() - 1 do
         local query_character = character_list:item_at(i)
+        local character_template_key = query_character:generation_template_key();
+        ModLog("FactionEffectBundleAwarded--执行,遍历 query_character: " .. character_template_key);
+        
         if ( query_character:has_effect_bundle(effect_bundle_key_character)) then
-            local character_template_key = query_character:generation_template_key();
+            local cqi = query_character:cqi();
+            local modify_character = cm:modify_character(cqi)
+            --先移除武将身上的effect_bundle，每次【必须】移除
+            modify_character:remove_effect_bundle(effect_bundle_key_character);
             ModLog("FactionEffectBundleAwarded--执行start, 目标人物: " .. character_template_key);
-            if((not query_character:is_dead())) then
-                local cqi = query_character:cqi();
-                local modify_character = cm:modify_character(cqi)
-                --先移除武将身上的effect_bundle，每次【必须】移除
-                modify_character:remove_effect_bundle(effect_bundle_key_character);
+
+            if(not query_character:is_dead()) then
                 ModLog("FactionEffectBundleAwarded--执行start, 目标人物存活: " .. character_template_key);
                 --根据类型，调用不同的方法
                 if (effect_bundle_key_character == "effect_bundle_斩首character") then
