@@ -82,13 +82,19 @@ local function brother(query_character, modify_character, query_faction, modify_
 end
 
 
---巩固忠诚
-local function solidify_loyalty(modify_character, modify_faction)
-    modify_character:add_loyalty_effect("past_experience_fondness")--满意度：派系喜爱 15，无限回合
-    modify_character:add_loyalty_effect("presented_gift")--满意度：礼尚往来 40，10回合
-    --扣除国库
-    modify_faction:decrease_treasury(300)
-    ModLog("FactionEffectBundleAwarded--执行, 【巩固忠诚】，国库减少300");
+--巩固忠诚（只可巩固一次）
+local function solidify_loyalty(modify_character, modify_faction, cqi)
+    if not cm:saved_value_exists("solidify_loyalty_byHy", cqi .. "") then
+        modify_character:add_loyalty_effect("past_experience_fondness")--满意度：派系喜爱 15，无限回合
+        modify_character:add_loyalty_effect("presented_gift")--满意度：礼尚往来 40，10回合
+        --扣除国库
+        modify_faction:decrease_treasury(300)
+        cm:set_saved_value("solidify_loyalty_byHy", true, cqi .. "")
+        ModLog("FactionEffectBundleAwarded--执行, 【巩固忠诚】，国库减少300");
+    else
+        ModLog("FactionEffectBundleAwarded--执行, 【巩固忠诚】，不可重复巩固，cqi: " .. cqi);
+    end
+
 end
 
 local function character_ex_op_do(context)
@@ -116,14 +122,14 @@ local function character_ex_op_do(context)
         local character_template_key = query_character:generation_template_key();
         --ModLog("FactionEffectBundleAwarded--执行,遍历 query_character: " .. character_template_key);
 
-        if ( query_character:has_effect_bundle(effect_bundle_key_character)) then
+        if (query_character:has_effect_bundle(effect_bundle_key_character)) then
             local cqi = query_character:cqi();
             local modify_character = cm:modify_character(cqi)
             --先移除武将身上的effect_bundle，每次【必须】移除
             modify_character:remove_effect_bundle(effect_bundle_key_character);
             ModLog("FactionEffectBundleAwarded--执行start, 目标人物: " .. character_template_key);
 
-            if(not query_character:is_dead()) then
+            if (not query_character:is_dead()) then
                 ModLog("FactionEffectBundleAwarded--执行start, 目标人物存活: " .. character_template_key);
                 --根据类型，调用不同的方法
                 if (effect_bundle_key_character == "effect_bundle_斩首character") then
@@ -135,7 +141,7 @@ local function character_ex_op_do(context)
                 elseif (effect_bundle_key_character == "effect_bundle_taoyuan_hy_character") then
                     brother(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
-                    solidify_loyalty(modify_character, modify_faction)
+                    solidify_loyalty(modify_character, modify_faction, cqi)
                 end
                 --由于上面character每次都会移除effect_bundle，所以此处只需要检测到一个符合条件的character即可，然后break跳出循环
                 break ;
