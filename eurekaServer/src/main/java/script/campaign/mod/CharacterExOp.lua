@@ -19,6 +19,8 @@ local effect_bundle_key_list = {
     { "effect_bundle_纳妾character", "effect_bundle_纳妾faction" },
     { "effect_bundle_taoyuan_hy_character", "effect_bundle_taoyuan_hy_faction" },
     { "effect_bundle_巩固忠诚character", "effect_bundle_巩固忠诚faction" }
+,
+    { "effect_bundle_feihou_hy_character", "effect_bundle_feihou_hy_faction" }
 }
 
 local function is_contain_effect_bundle_key_faction(effect_bundle_key)
@@ -51,6 +53,16 @@ local function kill(modify_character, modify_faction)
     ModLog("FactionEffectBundleAwarded--执行, 【斩首】，国库增加1000");
 end
 
+--下诏废后（其实就是主公单方面离婚，主公的伴侣不会离婚）
+local function leader_divorce(query_character, modify_character, query_faction, modify_faction)
+    if (query_character:family_member():has_spouse()) then
+        modify_character:family_member():divorce_spouse()
+        ModLog("FactionEffectBundleAwarded--执行, 【下诏废后】，主公单方面离婚");
+        --扣除国库
+        modify_faction:decrease_treasury(500)
+        ModLog("FactionEffectBundleAwarded--执行, 【下诏废后】，国库减少500");
+    end
+end
 
 --桃园结义
 local function brother(query_character, modify_character, query_faction, modify_faction)
@@ -142,6 +154,8 @@ local function character_ex_op_do(context)
                     brother(query_character, modify_character, query_faction, modify_faction)
                 elseif (effect_bundle_key_character == "effect_bundle_巩固忠诚character") then
                     solidify_loyalty(modify_character, modify_faction, cqi)
+                elseif (effect_bundle_key_character == "effect_bundle_feihou_hy_character") then
+                    leader_divorce(query_character, modify_character, query_faction, modify_faction)
                 end
                 --由于上面character每次都会移除effect_bundle，所以此处只需要检测到一个符合条件的character即可，然后break跳出循环
                 break ;
